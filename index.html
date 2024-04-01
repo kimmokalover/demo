@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>게시판</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+
+  /* 스타일된 라디오 버튼 */
+  .radio-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .radio-container input[type="radio"] {
+    display: none;
+  }
+
+  .radio-container label {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    margin: 0 10px;
+    background-color: #f2f2f2;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .radio-container label:hover {
+    background-color: #ddd;
+  }
+
+  /* 선택된 라디오 버튼의 배경색 */
+  .radio-container input[type="radio"]:checked + label {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  /* 게시판 스타일 */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f2f2f2;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  tr:hover {
+    background-color: #ddd;
+  }
+
+  /* 페이지네이션 스타일 */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    list-style: none;
+    padding: 0;
+    margin-bottom: 20px;
+  }
+
+  .pagination li {
+    margin: 0 5px;
+  }
+
+  .pagination a {
+    display: inline-block;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: black;
+    background-color: #f2f2f2;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+
+  .pagination a:hover {
+    background-color: #ddd;
+  }
+
+  .pagination .active {
+    background-color: #4CAF50;
+    color: white;
+  }
+
+  /* 글 작성 버튼 스타일 */
+  .new-post-button {
+    display: block;
+    width: 100px;
+    text-align: center;
+    padding: 10px;
+    background-color: #4CAF50;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    margin: 20px auto;
+  }
+
+  .new-post-button:hover {
+    background-color: #45a049;
+  }
+</style>
+</head>
+<body>
+    <h1>게시판</h1>
+
+    <!-- 라디오 버튼 -->
+    <div class="radio-container">
+      <input type="radio" id="radio1" name="filter" value="15" checked onclick="handleChange1();">
+      <label for="radio1">15</label>
+    
+      <input type="radio" id="radio2" name="filter" value="30" onclick="handleChange2();">
+      <label for="radio2">50</label>
+    
+      <input type="radio" id="radio3" name="filter" value="50" onclick="handleChange3();">
+      <label for="radio3">100</label>
+    </div>
+    
+    <!-- 게시글 목록 -->
+    <table id="postTable">
+      <!-- 테이블 내용은 JavaScript를 통해 동적으로 추가됩니다. -->
+    </table>
+    
+    <!-- 페이지네이션 -->
+    <div id="paginationDiv">
+      <!-- 페이지네이션 내용은 JavaScript를 통해 동적으로 추가됩니다. -->
+    </div>
+    
+    <!-- 글 작성 버튼 -->
+    <a href="form.html" class="new-post-button">글 작성</a>
+    
+    <script>
+        const serverIP = 'localhost';
+        const serverPort = '8080';
+        var defaultPageCnt = 15;
+        myStorage = window.localStorage;
+    
+        function onPageClick(page) {
+            fetchPosts(page, defaultPageCnt);
+        }
+    
+        // 서버에서 게시물 수를 가져오는 요청을 보내는 함수
+        function fetchPostCount() {
+            fetch(`http://${serverIP}:${serverPort}/api/post/count`)
+                .then(response => response.json())
+                .then(data => {
+                    renderPagination(data);
+                    console.log(defaultPageCnt);
+                    fetchPosts(1, defaultPageCnt); // 첫 번째 페이지의 게시물 가져오기
+                })
+                .catch(error => console.error('Error fetching post count:', error));
+        }
+    
+        // 페이지네이션을 렌더링하는 함수
+        function renderPagination(postCount) {
+            const totalPages = Math.ceil(postCount / defaultPageCnt);
+            const paginationDiv = document.getElementById('paginationDiv');
+            paginationDiv.innerHTML = '';
+            const ul = document.createElement('ul');
+            ul.classList.add('pagination');
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = `javascript:onPageClick(${i})`;
+                a.textContent = i;
+                li.appendChild(a);
+                ul.appendChild(li);
+            }
+            paginationDiv.appendChild(ul);
+        }
+    
+        // 서버에서 해당 페이지의 게시물을 가져오는 요청을 보내는 함수
+        function fetchPosts(page, size) {
+            fetch(`http://${serverIP}:${serverPort}/api/posts?page=${page}&pageSize=${size}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                    renderPosts(data)
+                })
+                .catch(error => console.error('Error fetching posts:', error));
+        }
+    
+        function renderPosts(posts) {
+            const postTable = document.getElementById('postTable');
+            postTable.innerHTML = ''; 
+            var keys = Object.keys(posts);
+        
+            for (var i= 0; i < keys.length; i++){
+                var key = keys[i];
+                var post = posts[key]
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <tr>
+                    <td>${post.author}</td>
+                    <td>${post.title}</td>
+                    <td>${post.content}</td>
+                    <td>${post.createdAt}</td>
+                    <td>
+                        <button onclick="detail(${post.id})">보기</button> 
+                        <button onclick="modify(${post.id})">수정</button>
+                    </td>
+                </tr>
+                `;
+                postTable.appendChild(tr);
+            }
+        }
+
+        function detail(id) {
+            localStorage.setItem("postInfo", id)
+            window.location.href = "detail.html"
+        }
+        function modify(id) {
+            localStorage.setItem("postInfo", id)
+            window.location.href = "update.html"
+        }
+
+        function handleChange1(){
+            defaultPageCnt = 15;
+            fetchPostCount();
+        }
+
+        function handleChange2(){
+            defaultPageCnt = 50;
+            fetchPostCount();
+        }
+
+        function handleChange3(){
+            defaultPageCnt = 100;
+            fetchPostCount();
+        }
+        // 페이지 로드 시 초기화
+        fetchPostCount();
+    </script>
+    </body>
+</html>

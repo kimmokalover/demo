@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>게시글 작성</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  label {
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+
+  input[type="text"],
+  textarea {
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    resize: vertical;
+  }
+
+  .submit-button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    text-align: center;
+  }
+
+  .submit-button:hover {
+    background-color: #45a049;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>게시글 작성</h1>
+    <form>
+        <label for="author">작성자:</label>
+        <div contenteditable="false" id="author" name="author" required></div>
+
+        <label for="title">제목:</label>
+        <div contenteditable="false" id="title" name="title" required></div>
+
+        <label for="content">내용:</label>
+        <div contenteditable="false" id="content" name="content" rows="6" required></div>
+
+        <div class="submit-button" onclick="deleteForm()">삭제</div>
+    </form>
+  
+    <table id="postTable">
+
+    </table>
+</div>
+
+<script>
+    const serverIP = 'localhost';
+    const serverPort = '8080';
+    var id = localStorage.getItem("postInfo");
+
+    const deleteForm = async () => {
+      const res = await fetch(`http://${serverIP}:${serverPort}/post/delete/${id}`, {
+            method: "delete",
+            mode: "cors",
+            cache: "no-cache",
+            credentials: "same-origin", // include, *same-origin, omit
+            headers: {
+            "Content-Type": "application/json",
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            redirect: "follow", // manual, *follow, error
+            referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        });
+        window.location.href = "index.html"
+    }
+
+
+    function renderPosts(posts) {
+        document.getElementById("author").textContent = posts.author;
+        document.getElementById("title").textContent = posts.title;
+        document.getElementById("content").textContent = posts.content;
+    }
+
+    const fetchData = async () => {
+        const res = await fetch(`http://${serverIP}:${serverPort}/post/detail/${id}`, {
+            method: "get",
+            mode: "cors",
+            cache: "no-cache",
+            credentials: "same-origin", // include, *same-origin, omit
+            headers: {
+            "Content-Type": "application/json",
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            redirect: "follow", // manual, *follow, error
+            referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        });
+        return res.json();
+    }
+
+    fetchData().then((data => {
+        renderPosts(data);
+    }));
+    // ==============================
+
+</script>
+
+</body>
+</html>
